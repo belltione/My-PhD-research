@@ -1,0 +1,246 @@
+clc;clear;warning off
+datapath='E:\research handover\EEG_raw_data\';
+outputpath='E:\research handover\Temporal_EEG_image';
+outputpath_label='E:\research handover\';
+load('DataList_index')
+SC=0;
+GRID_SCALE=32; % Size of the interpolated EEG image
+EEGimage_data = cell([1 3]);
+EEGimage_Datalist = cell([1 3]);
+EEGtrial_Num = zeros(1,4);
+EEGtrial_Numlist = zeros(1,4);
+EEGimage_TransformMode = 'None';
+Temporal_frame = 5; % Number of frames used to the fusion of EEG image
+frame_cooeficient = [0.05 0.1 0.15 0.2 0.5]; % Weighting for each frame used to the fusion of EEG image
+
+% Used in the comparison methods
+Is_HCNN_EEGimage_generation = 1; % 0: off, 1: on
+HCNN_outputpath ='E:\research handover\HCNN_EEG_image';
+Is_times_series_EEGimage_generation = 1; % 0: off, 1: on
+Time_series_outputpath ='E:\research handover\Time_series_EEG_image';
+
+% for dn=[1:3,5:37,39:66,68:70,72:79] % dn=70和71有問題
+        for dn=1
+    dn
+    SC=SC+1;
+
+    % Collect the EEG data of the current trials 
+    EEG_TemporalData_Collection = zeros(GRID_SCALE,GRID_SCALE,3,Temporal_frame);
+    
+    filename=[datapath '\' DataList{dn}];
+    load(filename)
+    load('ChannelInformation_64ch2') % channel name and coordinate in 2D map
+    ImportDataChannelName={chanlocs.labels};
+    pos_use=[];pos_use_coor=[];
+    for ch1=1:length(ChannelName) % 標準channel name
+        SI1=ChannelName{ch1};
+        
+        for ch2=1:length(ImportDataChannelName) % import data的channel name
+            SI2=ImportDataChannelName{ch2};
+           
+            % Modify SI2 if its channel name does not fit the standard channel name of international 10/20 system
+            if strcmpi(SI2,'T7')==1 
+                SI2='T3';
+            elseif strcmpi(SI2,'T8')==1
+                SI2='T4';
+            elseif strcmpi(SI2,'P7')==1
+                SI2='T5';
+            elseif strcmpi(SI2,'P8')==1
+                SI2='T6';     
+            end
+            if strcmpi(SI1,SI2)==1
+                pos_use(ch2)=1;
+                pos_use_coor(ch1)=1;
+            end
+            
+        end  
+    end
+    data=data(find(pos_use),:,:);
+    Coor=Coor(find(pos_use_coor),:);
+    BaselineData=BaselineData(find(pos_use),:);
+    
+    % dn=4, 38, 67, 80 part of channels are crushed
+    if dn==4
+        usechannel=[1:19,21:30]; % ch=20 break
+        data=data(usechannel,:,:);
+        Coor=Coor(usechannel,:);
+        BaselineData=BaselineData(usechannel,:);
+    end
+    if dn==38
+        usechannel=[1:7,9:30]; % ch=8 break
+        data=data(usechannel,:,:);
+        Coor=Coor(usechannel,:);
+        BaselineData=BaselineData(usechannel,:);
+    end
+    if dn==67
+        usechannel=[1:26,28:30]; % ch=27 break
+        data=data(usechannel,:,:);
+        Coor=Coor(usechannel,:);
+        BaselineData=BaselineData(usechannel,:);
+    end
+    if dn==80
+        usechannel=[1:13,15:30]; % ch=14 break
+        data=data(usechannel,:,:);
+        Coor=Coor(usechannel,:);
+        BaselineData=BaselineData(usechannel,:);
+    end
+    
+    % Baseline power from the first 1 min EEG 
+    BaselinePower=[];
+    for ch=1:size(BaselineData,1)
+        tempdata=double(BaselineData(ch,1:sr*60)); % Extract the first 1 min baseline signal
+        tempdata=tempdata-mean(tempdata); % Remove the mean value of baseline EEG for the individual differences problem
+        [S F T P]=spectrogram(tempdata,sr,[],sr,sr);
+        P=10*log10(P); % Change the value of Power Spectral Density to "dB"
+        BaselinePower(:,ch)=mean(P,2); % Compute the mean power of basline signal
+    end
+    
+    
+    alert_num = 0;
+    drowsy_num = 0;
+    image_filename = 0;
+    data_label = -1;
+    for tri=1:size(data,3)
+        inputvalue_theta=[];
+        inputvalue_alpha=[];
+        inputvalue_beta=[];        
+        for ch=1:size(data,1)
+            tempdata=[];
+            tempdata(:,:)=double(data(ch,:,tri));
+            tempdata=tempdata-mean(tempdata);
+            [S F T P]=spectrogram(tempdata,sr,[],sr,sr);
+            P=10*log10(P);
+            PowerChange=P-BaselinePower(:,ch); % Substract the mean power of baseline EEG for the individual differences problem
+            pos_theta=find(F>=4 & F<8); % Extract the data in the interesting frequency bands
+            pos_alpha=find(F>=8 & F<=13);
+            pos_beta=find(F>13& F<=30);
+            inputvalue_theta(ch)=mean(PowerChange(pos_theta)); % Calculate the mean power of the interesting frequency bands
+            inputvalue_alpha(ch)=mean(PowerChange(pos_alpha));
+            inputvalue_beta(ch)=mean(PowerChange(pos_beta));
+        end
+       
+        
+        % Compute the final image pixels
+        ImageValue_theta = FFT2Image(inputvalue_theta,'theta',EEGimage_TransformMode);
+        ImageValue_alpha = FFT2Image(inputvalue_alpha,'alpha',EEGimage_TransformMode);
+        ImageValue_beta = FFT2Image(inputvalue_beta,'beta',EEGimage_TransformMode);       
+        
+      
+        
+        imageshow=0;
+        [ToPoImageR]=TopoImage_Sheng((ImageValue_theta'),Coor,GRID_SCALE,imageshow);
+        [ToPoImageG]=TopoImage_Sheng((ImageValue_alpha'),Coor,GRID_SCALE,imageshow);
+        [ToPoImageB]=TopoImage_Sheng((ImageValue_beta'),Coor,GRID_SCALE,imageshow);
+        ImageInformation=[];
+        ImageInformation(:,:,1)=(ToPoImageR);
+        ImageInformation(:,:,2)=(ToPoImageG);
+        ImageInformation(:,:,3)=(ToPoImageB);
+    %         imshow((ImageInformation))
+          
+            % Put zero in the data of the corrupted channels
+        switch dn
+            case {4}
+                Pixel_R = [ImageValue_theta(1:19) 0 ImageValue_theta(20:29)];
+                Pixel_G = [ImageValue_alpha(1:19) 0 ImageValue_alpha(20:29)];
+                Pixel_B = [ImageValue_beta(1:19) 0 ImageValue_beta(20:29)];
+            case {38}
+                Pixel_R = [ImageValue_theta(1:7) 0 ImageValue_theta(8:29)];
+                Pixel_G = [ImageValue_alpha(1:7) 0 ImageValue_alpha(8:29)];
+                Pixel_B = [ImageValue_beta(1:7) 0 ImageValue_beta(8:29)];     
+            case {67}
+                Pixel_R = [ImageValue_theta(1:26) 0 ImageValue_theta(27:29)];
+                Pixel_G = [ImageValue_alpha(1:26) 0 ImageValue_alpha(27:29)];
+                Pixel_B = [ImageValue_beta(1:26) 0 ImageValue_beta(27:29)];
+            case {80}
+                Pixel_R = [ImageValue_theta(1:13) 0 ImageValue_theta(14:29)];
+                Pixel_G = [ImageValue_alpha(1:13) 0 ImageValue_alpha(14:29)];
+                Pixel_B = [ImageValue_beta(1:13) 0 ImageValue_beta(14:29)];
+            otherwise
+                Pixel_R = ImageValue_theta;
+                Pixel_G = ImageValue_alpha;
+                Pixel_B = ImageValue_beta;
+        end
+            
+        % Update the temporal EEG image frames   
+        
+        for t=1:size(EEG_TemporalData_Collection,4) - 1                   
+            EEG_TemporalData_Collection(:,:,:,t) = EEG_TemporalData_Collection(:,:,:,t + 1);              
+        end        
+        EEG_TemporalData_Collection(:,:,:,Temporal_frame) = ImageInformation; % Put the currently generated EEG image data in the last frame
+         
+        final_EEG_image = TemporalData_fusion(EEG_TemporalData_Collection,GRID_SCALE,frame_cooeficient);
+                
+          
+        if (tri >= Temporal_frame) % Do not consider the first few trials          
+            if RT(tri) >= 2.5
+                data_label = 1;
+                drowsy_num = drowsy_num + 1;
+                       
+                  image_filename = [num2str(data_label) '_' num2str(dn) '_' num2str(drowsy_num) '.bmp'];     
+                                    
+                   % Generate the EEG images in HCNN algorithm (comparison method)
+                  if Is_HCNN_EEGimage_generation == 1 
+                      HCNN_EEGimage_generation(Pixel_R,Pixel_G,Pixel_B,HCNN_outputpath,image_filename);
+                  end
+                  if Is_times_series_EEGimage_generation == 1 
+                      Times_series_EEGimage_generation(data(:,:,tri),Time_series_outputpath,image_filename);
+                  end    
+                  
+                  mkdir(outputpath);
+                  imwrite(final_EEG_image, [outputpath '\' image_filename]);
+            elseif RT(tri) <= 2.1
+                data_label = 0;
+                alert_num = alert_num + 1;
+                      
+                  image_filename = [num2str(data_label) '_' num2str(dn) '_' num2str(alert_num) '.bmp'];
+                  
+                  % Generate the EEG images in HCNN algorithm (comparison method)
+                  if Is_HCNN_EEGimage_generation == 1 
+                      HCNN_EEGimage_generation(Pixel_R,Pixel_G,Pixel_B,HCNN_outputpath,image_filename);
+                  end
+                  % Generate time-series EEG image(comparison method used)
+                  if Is_times_series_EEGimage_generation == 1 
+                      Times_series_EEGimage_generation(data(:,:,tri),Time_series_outputpath,image_filename);
+                  end
+                  
+                  mkdir(outputpath);
+                  imwrite(final_EEG_image, [outputpath '\' image_filename]);
+            end
+           
+           if RT(tri) <= 2.1 || RT(tri) >= 2.5
+                EEGimage_data{1,1} = dn;
+                EEGimage_data{1,2} = image_filename;
+                EEGimage_data{1,3} = data_label;
+                
+                % Add the information of EEG image to the datalist cell               
+                if ~isequal(EEGimage_Datalist(1,1),{[]}) 
+                    EEGimage_Datalist = [EEGimage_Datalist;EEGimage_data];           
+                else                     
+                    EEGimage_Datalist = EEGimage_data;            
+                end
+           
+           end
+        
+        
+        
+        
+          close
+        end
+    end
+    % Store the number of alert and drowsy trials in each subject
+        EEGtrial_Num(1,1) = dn;
+        EEGtrial_Num(1,2) = alert_num;
+        EEGtrial_Num(1,3) = drowsy_num;
+        EEGtrial_Num(1,4) = alert_num + drowsy_num;
+        
+        if dn ~= 1 
+            EEGtrial_Numlist = [EEGtrial_Numlist;EEGtrial_Num];           
+        else
+            EEGtrial_Numlist = EEGtrial_Num;            
+        end
+%      ImageValue_distribution_plot(EEGchannel_statistic,dn,alert_num,drowsy_num)
+end
+  
+% Temporal_EEGimage_Label_Generation(EEGimage_Datalist,outputpath_label);
+% save EEGimage_Datalist_medium_removed EEGimage_Datalist
+% save EEGtrial_Numlist_medium_removed EEGtrial_Numlist
