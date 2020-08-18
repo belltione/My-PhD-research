@@ -17,7 +17,7 @@ There are two advantages in our proposed system: (1) The spatial information of 
 <br>
 ### Deep Learning-based Lane Marking Detection
 
-This is a cooperation project with Idustrial Technology Research Instituite(ITRI) in 2016. The main goal is using deep learning based model to perform lane marking detection in real-world driving videos. Although I cannot offer the source code used in this project, __ITRI_project.ppt__ gives a brief introduction of my approach for the lane marking detection task.
+This is a cooperation project with Idustrial Technology Research Instituite(ITRI) in 2016. The main goal is using deep learning based model to perform lane marking detection in real-world driving videos. Although I cannot offer the source code used in this project, __ITRI_project.pptx__ gives a brief introduction of my approach for the lane marking detection task.
 <br>
 <br>
 <br>
