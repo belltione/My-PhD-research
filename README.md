@@ -14,3 +14,8 @@ There are two advantages in our proposed system: (1) The spatial information of 
 
 The detailed information is available in the following paper:<br>
 Eric Juwei Cheng, Ku-Young Young, Chin Teng Lin, “Temporal EEG imaging for drowsy driving prediction", Appl. Sci. 2019, 9, 1021.
+<br>
+<br>
+### Deep Learning-based Lane Marking Detection
+
+This is a cooperation project with Idustrial Technology Research Instituite(ITRI) in 2016. The main goal of this project is using deep learning based model to perform lane marking detection in real-world driving videos. Although I cannot offer the source code used in this project, ITRI_project.ppt gives a brief introduction of my approach for lane marking detection task.
