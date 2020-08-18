@@ -12,8 +12,9 @@ The brain signals is transformed into a 2D color image, and then passed into a C
 There are two advantages in our proposed system: (1) The spatial information of the human brain signal can be well preserved via the transformed 2D color images, (2) the proposed algorithm is a fully automatic system without any manual artifact removal process.
 
 
-`The detailed information is available in the following paper:<br>
-Eric Juwei Cheng, Ku-Young Young, Chin Teng Lin, “Temporal EEG imaging for drowsy driving prediction", Appl. Sci. 2019, 9, 1021.`
+`The detailed information is available in the following paper:`
+<br>
+`Eric Juwei Cheng, Ku-Young Young, Chin Teng Lin, “Temporal EEG imaging for drowsy driving prediction", Appl. Sci. 2019, 9, 1021.`
 <br>
 <br>
 ### Deep Learning-based Lane Marking Detection
