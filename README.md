@@ -1,5 +1,5 @@
 # My PhD research
-My name is Eric Ju-Wei Cheng, a Ph.D in the Institute of Electrical and Control Engineering from National Chiao Tung University.<br> 
+My name is Eric JuWei Cheng, a Ph.D in the Institute of Electrical and Control Engineering from National Chiao Tung University.<br> 
 My research focused mostly on the field of deep learning.<br>
 I also am familiar with subjects such as computer vision, image processing, pattern recognition, and embedded system, etc.<br>
 <br>
