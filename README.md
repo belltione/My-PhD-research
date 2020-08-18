@@ -18,4 +18,4 @@ Eric Juwei Cheng, Ku-Young Young, Chin Teng Lin, “Temporal EEG imaging for dro
 <br>
 ### Deep Learning-based Lane Marking Detection
 
-This is a cooperation project with Idustrial Technology Research Instituite(ITRI) in 2016. The main goal of this project is using deep learning based model to perform lane marking detection in real-world driving videos. Although I cannot offer the source code used in this project, ITRI_project.ppt gives a brief introduction of my approach for lane marking detection task.
+This is a cooperation project with Idustrial Technology Research Instituite(ITRI) in 2016. The main goal of this project is using deep learning based model to perform lane marking detection in real-world driving videos. Although I cannot offer the source code used in this project, ITRI_project.ppt gives a brief introduction of my approach for the lane marking detection task.
